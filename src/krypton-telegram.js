@@ -368,6 +368,10 @@ const start = async () => {
         }
     });
 
+    app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`)
+})
+
     // Start the server only if not running from server.js
     if (!process.env.RUNNING_FROM_SERVER_JS) {
         http.listen(port, () => {
@@ -428,11 +432,11 @@ if (!process.env.TELEGRAM_BOT_TOKEN) {
     });
     
     // Start the server
-    const port = process.env.PORT || process.env.TELEGRAM_PORT || 3001;
-    app.listen(port, () => {
-        console.log(`✅ Web-only server running on port ${port}`);
-        console.log(`🌐 Server URL: http://localhost:${port}`);
-    });
+    // const port = process.env.PORT || process.env.TELEGRAM_PORT || 3001;
+    // app.listen(port, () => {
+    //     console.log(`✅ Web-only server running on port ${port}`);
+    //     console.log(`🌐 Server URL: http://localhost:${port}`);
+    // });
 } else {
     // Start the bot
     start().catch(err => {
