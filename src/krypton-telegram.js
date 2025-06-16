@@ -358,6 +358,10 @@ const start = async () => {
         }
     });
 
+    app.get("/ping", (req, res) => {
+  res.send("Telegram bot server is running");
+});
+
     // Start the server
     http.listen(port, () => {
         console.log(`✅ Server running on port ${port}`);
