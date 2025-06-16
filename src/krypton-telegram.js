@@ -35,7 +35,7 @@ app.use(cors({
   origin: '*' // Allow requests from any origin in production
 }))
 
-const port = process.env.PORT || 3001
+const port = process.env.PORT
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
