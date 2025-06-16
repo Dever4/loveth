@@ -13,8 +13,8 @@
    "license": "SEE LICENSE IN LICENSE.md",
    "scripts": {
       "format": "prettier --write --config .prettierrc.json \"src/**/*.js\"",
-      "start": "node run.js",
-      "start:server": "node server.js",
+      "start": "node server.js",
+      "start:bot": "node run.js",
       "dev": "nodemon --exec node run.js"
    },
    "bugs": {
