@@ -2,7 +2,6 @@
  * Simple script to run the Telegram bot
  */
 
-const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
@@ -22,25 +21,24 @@ if (!fs.existsSync(envPath)) {
     process.exit(1);
 }
 
-// Start the bot
-console.log('🚀 Starting Telegram bot...');
-const botProcess = spawn('node', ['src/krypton-telegram.js'], {
-    stdio: 'inherit'
-});
+// Load environment variables
+require('dotenv').config();
 
-botProcess.on('close', (code) => {
-    console.log(`❌ Bot process exited with code ${code}`);
-});
+// Log the port that will be used
+const port = process.env.PORT || process.env.TELEGRAM_PORT || 3001;
+console.log(`🔌 Will start server on port ${port}`);
+
+// Start the bot directly
+console.log('🚀 Starting Telegram bot...');
+require('./src/krypton-telegram.js');
 
 // Handle termination signals
 process.on('SIGINT', () => {
     console.log('👋 Received SIGINT, shutting down...');
-    botProcess.kill('SIGINT');
     process.exit(0);
 });
 
 process.on('SIGTERM', () => {
     console.log('👋 Received SIGTERM, shutting down...');
-    botProcess.kill('SIGTERM');
     process.exit(0);
 });
