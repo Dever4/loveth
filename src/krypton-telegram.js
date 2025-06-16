@@ -35,7 +35,7 @@ app.use(cors({
   origin: '*' // Allow requests from any origin in production
 }))
 
-const port = process.env.PORT
+const port = process.env.PORT || process.env.TELEGRAM_PORT || 3001
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
@@ -327,6 +327,16 @@ const start = async () => {
     }
 
     // API Routes
+    // Root route for health checks
+    app.get('/', (req, res) => {
+        res.json({
+            status: 'ok',
+            message: 'Telegram Bot API is running',
+            botStatus: global.connected ? 'connected' : 'disconnected',
+            botUsername: global.connectedBotUsername
+        });
+    });
+    
     app.get('/api/status', (req, res) => {
         res.json({
             status: global.connected ? 'connected' : 'disconnected',
@@ -358,14 +368,16 @@ const start = async () => {
         }
     });
 
-    app.get("/ping", (req, res) => {
-  res.send("Telegram bot server is running");
-});
-
-    // Start the server
-    http.listen(port, () => {
-        console.log(`✅ Server running on port ${port}`);
-    });
+    // Start the server only if not running from server.js
+    if (!process.env.RUNNING_FROM_SERVER_JS) {
+        http.listen(port, () => {
+            console.log(`✅ Server running on port ${port}`);
+            console.log(`🌐 Server URL: http://localhost:${port}`);
+            console.log(`🔍 Health check endpoint: http://localhost:${port}/`);
+        });
+    } else {
+        console.log(`ℹ️ Skipping HTTP server start (already started by server.js)`);
+    }
 
     // Socket.IO connection
     io.on('connection', (socket) => {
@@ -398,7 +410,32 @@ const start = async () => {
     process.once('SIGTERM', () => bot.stop('SIGTERM'));
 };
 
-// Start the bot
-start().catch(err => {
-    console.error('❌ Error in main process:', err);
-});
+// Create a simple express app if not starting the full bot
+if (!process.env.TELEGRAM_BOT_TOKEN) {
+    console.log('⚠️ No TELEGRAM_BOT_TOKEN found. Starting in web-only mode.');
+    
+    // Create a simple express app
+    const express = require('express');
+    const app = express();
+    
+    // Add a health check route
+    app.get('/', (req, res) => {
+        res.json({
+            status: 'ok',
+            message: 'Telegram Bot API is running in web-only mode',
+            note: 'Bot is not connected because TELEGRAM_BOT_TOKEN is not set'
+        });
+    });
+    
+    // Start the server
+    const port = process.env.PORT || process.env.TELEGRAM_PORT || 3001;
+    app.listen(port, () => {
+        console.log(`✅ Web-only server running on port ${port}`);
+        console.log(`🌐 Server URL: http://localhost:${port}`);
+    });
+} else {
+    // Start the bot
+    start().catch(err => {
+        console.error('❌ Error in main process:', err);
+    });
+}
