@@ -393,8 +393,8 @@ module.exports.MessageHandler = async (ctx, bot) => {
         const conversationStateTable = bot.DB.table('conversationState');
         let conversationState = await conversationStateTable.get(userId) || { stage: 'none', lastUpdate: Date.now() };
         
-        // Special handling for /start command
-        if (text.trim() === '/start') {
+        // Start the conversation if this is the first message or /start command
+        if (conversationState.stage === 'none' || text.trim() === '/start') {
             // Simulate human typing for a more natural experience
             await simulateHumanTyping(ctx, chatId, 5000); // 5 seconds of typing
             
@@ -844,6 +844,58 @@ module.exports.MessageHandler = async (ctx, bot) => {
             // Update conversation state
             await conversationStateTable.set(userId, { stage: 'registration_complete', lastUpdate: Date.now() });
             
+            return;
+        }
+        
+        // Handle messages from users who have already completed registration
+        if (conversationState.stage === 'registration_complete') {
+            // Prepare a list of possible responses for variety
+            const responses = [
+                'I\'ve already added you to our VIP signals group! You\'ll start receiving signals soon. 📊',
+                'Your account is all set up! Just wait for the signals to start coming in. 💰',
+                'You\'re all ready to go! I\'ll be sending trading signals shortly. 📈',
+                'Everything is set up perfectly! You\'ll receive your first signals soon. ⚡️',
+                'You\'re already in our system! Just wait for the signals to start flowing. 🚀'
+            ];
+            
+            // Select a random response
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            
+            // Simulate typing for a natural experience
+            await simulateHumanTyping(ctx, chatId, 3000); // 3 seconds of typing
+            await ctx.reply(randomResponse);
+            return;
+        }
+        
+        // Handle messages from users who declined to join
+        if (conversationState.stage === 'declined') {
+            // Prepare a list of possible responses for variety
+            const responses = [
+                'If you change your mind about joining our VIP signals group, just type "join" and we can get started! 📊',
+                'No problem! If you ever want to start trading with us, just say "join" and I\'ll help you get set up. 💰',
+                'I respect your decision. If you ever want to join our trading group in the future, just let me know! 📈'
+            ];
+            
+            // Select a random response
+            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+            
+            // Check if the user is now interested in joining
+            if (lowerText.includes('join') || lowerText.includes('start') || lowerText.includes('yes') || 
+                lowerText.includes('okay') || lowerText.includes('interested') || isAffirmative) {
+                // Reset their state to start the process again
+                await conversationStateTable.set(userId, { stage: 'none', lastUpdate: Date.now() });
+                
+                // Simulate typing for a natural experience
+                await simulateHumanTyping(ctx, chatId, 3000); // 3 seconds of typing
+                await ctx.reply('Great! Let\'s start over. I\'ll help you join our VIP trading group.');
+                
+                // Trigger the start sequence on the next message
+                return;
+            }
+            
+            // Simulate typing for a natural experience
+            await simulateHumanTyping(ctx, chatId, 3000); // 3 seconds of typing
+            await ctx.reply(randomResponse);
             return;
         }
         
