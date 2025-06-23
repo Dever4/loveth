@@ -35,7 +35,7 @@ app.use(cors({
   origin: '*' // Allow requests from any origin in production
 }))
 
-const port = process.env.PORT || process.env.TELEGRAM_PORT || 8080
+const port = process.env.PORT || process.env.TELEGRAM_PORT || 3001
 
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
@@ -279,6 +279,34 @@ const start = async () => {
         });
     });
 
+    // Handle channel join requests
+    bot.on('chat_join_request', async (ctx) => {
+        try {
+            // Approve the join request
+            await ctx.approveChatJoinRequest();
+
+            // Simulate human typing for a more natural experience
+            await ctx.telegram.sendChatAction(ctx.from.id, 'typing');
+            await new Promise(res => setTimeout(res, 5000));
+            await ctx.telegram.sendMessage(ctx.from.id, "Hi, I'm Loveth");
+
+            await ctx.telegram.sendChatAction(ctx.from.id, 'typing');
+            await new Promise(res => setTimeout(res, 8000));
+            await ctx.telegram.sendMessage(
+                ctx.from.id,
+                "If you are looking for profitable signals and a solid trading mentor, you made the best decision by writing to me❤️\nBefore we dive in, I'd love to learn a bit about you. What's your name and where are you from?"
+            );
+
+            // Optionally, update conversation state if you want to track it for channel joiners as well
+            if (bot && bot.DB && bot.DB.table) {
+                const conversationStateTable = bot.DB.table('conversationState');
+                await conversationStateTable.set(ctx.from.id.toString(), { stage: 'start_1', lastUpdate: Date.now() });
+            }
+        } catch (err) {
+            console.error('❌ Error handling chat join request:', err);
+        }
+    });
+
     // Handle errors
     bot.catch((err, ctx) => {
         console.error(`❌ Error in bot: ${err}`);
@@ -368,10 +396,6 @@ const start = async () => {
         }
     });
 
-    app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
-
     // Start the server only if not running from server.js
     if (!process.env.RUNNING_FROM_SERVER_JS) {
         http.listen(port, () => {
@@ -432,11 +456,11 @@ if (!process.env.TELEGRAM_BOT_TOKEN) {
     });
     
     // Start the server
-    // const port = process.env.PORT || process.env.TELEGRAM_PORT || 3001;
-    // app.listen(port, () => {
-    //     console.log(`✅ Web-only server running on port ${port}`);
-    //     console.log(`🌐 Server URL: http://localhost:${port}`);
-    // });
+    const port = process.env.PORT || process.env.TELEGRAM_PORT || 3001;
+    app.listen(port, () => {
+        console.log(`✅ Web-only server running on port ${port}`);
+        console.log(`🌐 Server URL: http://localhost:${port}`);
+    });
 } else {
     // Start the bot
     start().catch(err => {
