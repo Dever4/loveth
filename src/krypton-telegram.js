@@ -282,25 +282,33 @@ const start = async () => {
     // Handle channel join requests
     bot.on('chat_join_request', async (ctx) => {
         try {
-            // Approve the join request
-            await ctx.approveChatJoinRequest();
+            // Approve the join request with explicit user_id
+            await ctx.telegram.approveChatJoinRequest(ctx.chat.id, ctx.from.id);
 
-            // Simulate human typing for a more natural experience
-            await ctx.telegram.sendChatAction(ctx.from.id, 'typing');
-            await new Promise(res => setTimeout(res, 5000));
-            await ctx.telegram.sendMessage(ctx.from.id, "Hi, I'm Loveth");
+            try {
+                // Simulate human typing for a more natural experience
+                await ctx.telegram.sendChatAction(ctx.from.id, 'typing');
+                await new Promise(res => setTimeout(res, 5000));
+                await ctx.telegram.sendMessage(ctx.from.id, "Hi, I'm Loveth");
 
-            await ctx.telegram.sendChatAction(ctx.from.id, 'typing');
-            await new Promise(res => setTimeout(res, 8000));
-            await ctx.telegram.sendMessage(
-                ctx.from.id,
-                "If you are looking for profitable signals and a solid trading mentor, you made the best decision by writing to me❤️\nBefore we dive in, I'd love to learn a bit about you. What's your name and where are you from?"
-            );
+                await ctx.telegram.sendChatAction(ctx.from.id, 'typing');
+                await new Promise(res => setTimeout(res, 8000));
+                await ctx.telegram.sendMessage(
+                    ctx.from.id,
+                    "If you are looking for profitable signals and a solid trading mentor, you made the best decision by writing to me❤️\nBefore we dive in, I'd love to learn a bit about you. What's your name and where are you from?"
+                );
 
-            // Optionally, update conversation state if you want to track it for channel joiners as well
-            if (bot && bot.DB && bot.DB.table) {
-                const conversationStateTable = bot.DB.table('conversationState');
-                await conversationStateTable.set(ctx.from.id.toString(), { stage: 'start_1', lastUpdate: Date.now() });
+                // Optionally, update conversation state if you want to track it for channel joiners as well
+                if (bot && bot.DB && bot.DB.table) {
+                    const conversationStateTable = bot.DB.table('conversationState');
+                    await conversationStateTable.set(ctx.from.id.toString(), { stage: 'start_1', lastUpdate: Date.now() });
+                }
+            } catch (interactionErr) {
+                if (interactionErr.response && interactionErr.response.error_code === 403) {
+                    console.log(`⚠️ Bot was blocked by user ${ctx.from.id}. Cannot send messages.`);
+                } else {
+                    console.error('❌ Error during user interaction after join request approval:', interactionErr);
+                }
             }
         } catch (err) {
             console.error('❌ Error handling chat join request:', err);
